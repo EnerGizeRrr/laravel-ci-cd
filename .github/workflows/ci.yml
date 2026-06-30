@@ -1,0 +1,236 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Stage 1: Lint & Static Analysis
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: [ '8.4' ]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          tools: composer:latest
+          extensions: pdo_mysql, zip, bcmath
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run PHP Lint
+        run: composer exec -- pint --test
+
+      - name: Run PHPStan static analysis
+        run: |
+          if [ -f phpstan.neon ]; then
+            composer exec -- phpstan analyse
+          else
+            echo "PHPStan config not found, skipping..."
+          fi
+
+      - name: Check PHP syntax
+        run: find app -name "*.php" -exec php -l {} \;
+
+  # Stage 2: Tests
+  test:
+    name: Tests (PHP ${{ matrix.php-version }} / MySQL ${{ matrix.mysql-version }})
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: [ '8.4' ]
+        mysql-version: [ '8.0' ]
+    
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql-version }}
+        env:
+          MYSQL_DATABASE: laravel_test
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_PASSWORD: password
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          tools: composer:latest
+          extensions: pdo_mysql, zip, bcmath
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Setup environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Wait for MySQL to be ready
+        run: |
+          until mysql -h"127.0.0.1" -P"3306" -u"root" -p"root" -e "SELECT 1" > /dev/null 2>&1; do
+            echo 'waiting for mysql...'
+            sleep 1
+          done
+
+      - name: Run migrations
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan migrate --force
+
+      - name: Run tests
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan test --without-tty
+
+      - name: Run tests with coverage
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan test --coverage --coverage-report=html
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report-${{ matrix.php-version }}-mysql-${{ matrix.mysql-version }}
+          path: coverage
+
+  # Stage 3: Build Docker Image
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [ lint, test ]
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          target: prod
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save Docker image as artifact
+        if: github.event_name == 'pull_request'
+        run: |
+          mkdir -p /tmp/docker-images
+          docker buildx build \
+            --context . \
+            --target prod \
+            --output type=docker,dest=/tmp/docker-images/image.tar \
+            .
+          ls -lh /tmp/docker-images/
+
+      - name: Upload Docker image artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-image-${{ github.sha }}
+          path: /tmp/docker-images/image.tar
+          retention-days: 1
