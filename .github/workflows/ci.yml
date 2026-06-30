@@ -11,7 +11,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Stage 1: Lint & Static Analysis
   lint:
     name: Lint & Static Analysis
     runs-on: ubuntu-latest
@@ -36,7 +35,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -59,7 +58,6 @@ jobs:
       - name: Check PHP syntax
         run: find app -name "*.php" -exec php -l {} \;
 
-  # Stage 2: Tests
   test:
     name: Tests (PHP ${{ matrix.php-version }} / MySQL ${{ matrix.mysql-version }})
     runs-on: ubuntu-latest
@@ -111,7 +109,7 @@ jobs:
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -164,12 +162,11 @@ jobs:
 
       - name: Upload coverage reports
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report-${{ matrix.php-version }}-mysql-${{ matrix.mysql-version }}
           path: coverage
 
-  # Stage 3: Build Docker Image
   build:
     name: Build Docker Image
     runs-on: ubuntu-latest
@@ -229,7 +226,7 @@ jobs:
 
       - name: Upload Docker image artifact
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docker-image-${{ github.sha }}
           path: /tmp/docker-images/image.tar

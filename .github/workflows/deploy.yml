@@ -43,7 +43,7 @@ jobs:
           extensions: pdo_mysql, zip, bcmath
 
       - name: Cache Composer
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -72,7 +72,7 @@ jobs:
           echo "Author: ${{ github.actor }}" >> deployment_summary.txt
 
       - name: Upload deployment summary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-summary
           path: deployment_summary.txt
@@ -189,7 +189,7 @@ jobs:
 
       - name: Upload deployment log
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-logs
           path: deploy/deploy_*.log
