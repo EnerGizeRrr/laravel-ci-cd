@@ -9,8 +9,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MetricsMiddleware
 {
-    private array $responseTimes = [];
-
     public function handle(Request $request, Closure $next): Response
     {
         $startTime = microtime(true);
@@ -39,6 +37,7 @@ class MetricsMiddleware
 
             $this->updateResponseTimeMetrics($durationMs);
         } catch (\Exception $e) {
+            // Silently ignore Redis errors
         }
     }
 

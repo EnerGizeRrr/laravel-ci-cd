@@ -24,7 +24,7 @@ class HandleCors extends BaseHandleCors
 
     public function __construct()
     {
-        $this->allowedOrigins = array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', '*')));
-        $this->supportsCredentials = env('CORS_SUPPORTS_CREDENTIALS', false);
+        $this->allowedOrigins = array_filter(explode(',', config('app.cors.allowed_origins', '*')));
+        $this->supportsCredentials = (bool) config('app.cors.supports_credentials', false);
     }
 }

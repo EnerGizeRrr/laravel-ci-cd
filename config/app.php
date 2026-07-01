@@ -201,4 +201,20 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | CORS Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure your CORS settings for your API. This array
+    | determines the CORS allowed origins, methods, headers, and other
+    | settings for cross-origin requests.
+    |
+    */
+
+    'cors' => [
+        'allowed_origins' => env('CORS_ALLOWED_ORIGINS', '*'),
+        'supports_credentials' => env('CORS_SUPPORTS_CREDENTIALS', false),
+    ],
+
 ];
