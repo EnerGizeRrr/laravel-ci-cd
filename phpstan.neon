@@ -4,9 +4,6 @@ parameters:
     - app
   excludePaths:
     - tests
-  ignoreErrors:
-    - identifier: method.notFound
-      message: '#Call to an undefined method#'
 
 includes:
   - vendor/nunomaduro/larastan/extension.neon
