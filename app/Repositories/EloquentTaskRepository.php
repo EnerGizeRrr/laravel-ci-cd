@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Contracts\TaskRepositoryInterface;
 use App\Models\Task;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class EloquentTaskRepository implements TaskRepositoryInterface
@@ -33,6 +32,7 @@ class EloquentTaskRepository implements TaskRepositoryInterface
     public function update(Task $task, array $data): Task
     {
         $task->update($data);
+
         return $task;
     }
 

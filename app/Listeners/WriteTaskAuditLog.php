@@ -2,12 +2,9 @@
 
 namespace App\Listeners;
 
-use App\Jobs\SendTaskCompletedNotification;
 use App\Events\TaskCompleted;
+use App\Jobs\SendTaskCompletedNotification;
 use App\Models\TaskAudit;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Support\Facades\Auth;
 
 class WriteTaskAuditLog
 {
@@ -29,8 +26,8 @@ class WriteTaskAuditLog
             'event' => 'completed',
             'meta' => [
                 'previous_status' => $event->previousStatus,
-                'user_id' => $event->user->id, 
-                'user_name' => $event->user->name, 
+                'user_id' => $event->user->id,
+                'user_name' => $event->user->name,
             ],
             'occurred_at' => now(),
         ]);

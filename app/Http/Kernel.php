@@ -2,7 +2,12 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\HandleCors;
+use App\Http\Middleware\MetricsMiddleware;
+use App\Http\Middleware\RequestIdMiddleware;
+use App\Http\Middleware\RequestLoggingMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 
 class Kernel extends HttpKernel
 {
@@ -14,10 +19,10 @@ class Kernel extends HttpKernel
      * @var array<int, class-string|string>
      */
     protected $middleware = [
-        \App\Http\Middleware\RequestIdMiddleware::class,
-        \App\Http\Middleware\MetricsMiddleware::class,
-        \App\Http\Middleware\RequestLoggingMiddleware::class,
-        \App\Http\Middleware\HandleCors::class,
+        RequestIdMiddleware::class,
+        MetricsMiddleware::class,
+        RequestLoggingMiddleware::class,
+        HandleCors::class,
     ];
 
     /**
@@ -40,6 +45,6 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
-        'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'throttle' => ThrottleRequests::class,
     ];
 }

@@ -3,11 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -33,8 +34,8 @@ class User extends Authenticatable
     /**
      * Always hash the user's password when setting it.
      */
-    protected function password(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function password(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(set: fn ($value) => Hash::make($value));
+        return Attribute::make(set: fn ($value) => Hash::make($value));
     }
 }

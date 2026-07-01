@@ -22,7 +22,7 @@ class HealthController extends Controller
         try {
             DB::connection()->getPdo();
             Redis::ping();
-            
+
             return response()->json([
                 'status' => 'ready',
                 'database' => 'connected',
@@ -76,7 +76,7 @@ class HealthController extends Controller
         $lines = [
             '# HELP http_requests_total Total HTTP requests',
             '# TYPE http_requests_total counter',
-            'http_requests_total ' . $stats['requests_total'],
+            'http_requests_total '.$stats['requests_total'],
             '',
             '# HELP http_requests_by_method HTTP requests by method',
             '# TYPE http_requests_by_method counter',
@@ -89,23 +89,23 @@ class HealthController extends Controller
         $lines[] = '';
         $lines[] = '# HELP http_response_time_avg Average response time in milliseconds';
         $lines[] = '# TYPE http_response_time_avg gauge';
-        $lines[] = 'http_response_time_avg ' . $stats['response_time_avg_ms'];
+        $lines[] = 'http_response_time_avg '.$stats['response_time_avg_ms'];
         $lines[] = '';
         $lines[] = '# HELP http_response_time_p95 P95 response time in milliseconds';
         $lines[] = '# TYPE http_response_time_p95 gauge';
-        $lines[] = 'http_response_time_p95 ' . $stats['response_time_p95_ms'];
+        $lines[] = 'http_response_time_p95 '.$stats['response_time_p95_ms'];
         $lines[] = '';
         $lines[] = '# HELP http_response_time_p99 P99 response time in milliseconds';
         $lines[] = '# TYPE http_response_time_p99 gauge';
-        $lines[] = 'http_response_time_p99 ' . $stats['response_time_p99_ms'];
+        $lines[] = 'http_response_time_p99 '.$stats['response_time_p99_ms'];
         $lines[] = '';
         $lines[] = '# HELP http_errors_4xx HTTP 4xx errors';
         $lines[] = '# TYPE http_errors_4xx counter';
-        $lines[] = 'http_errors_4xx ' . $stats['errors_4xx'];
+        $lines[] = 'http_errors_4xx '.$stats['errors_4xx'];
         $lines[] = '';
         $lines[] = '# HELP http_errors_5xx HTTP 5xx errors';
         $lines[] = '# TYPE http_errors_5xx counter';
-        $lines[] = 'http_errors_5xx ' . $stats['errors_5xx'];
+        $lines[] = 'http_errors_5xx '.$stats['errors_5xx'];
 
         return implode("\n", $lines);
     }

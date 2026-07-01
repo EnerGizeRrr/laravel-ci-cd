@@ -12,9 +12,9 @@ class RequestIdMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $requestId = $request->header('X-Request-ID') ?: Str::uuid();
-        
+
         $request->attributes->set('request_id', $requestId);
-        
+
         return $next($request)->header('X-Request-ID', $requestId);
     }
 }

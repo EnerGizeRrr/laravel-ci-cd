@@ -28,7 +28,7 @@ class MetricsMiddleware
     {
         try {
             Redis::incr('metrics:requests_total');
-            Redis::incr('metrics:requests:' . $request->method());
+            Redis::incr('metrics:requests:'.$request->method());
 
             $statusCode = $response->getStatusCode();
             if ($statusCode >= 400 && $statusCode < 500) {
@@ -44,15 +44,15 @@ class MetricsMiddleware
 
     private function updateResponseTimeMetrics(float $durationMs): void
     {
-        $key = 'metrics:response_times:' . date('Y-m-d H:i');
-        
+        $key = 'metrics:response_times:'.date('Y-m-d H:i');
+
         Redis::lpush($key, $durationMs);
         Redis::expire($key, 3600);
 
         $times = Redis::lrange($key, 0, -1);
         $times = array_map('floatval', $times);
 
-        if (!empty($times)) {
+        if (! empty($times)) {
             $avg = array_sum($times) / count($times);
             Redis::set('metrics:response_time_avg', round($avg, 2));
 

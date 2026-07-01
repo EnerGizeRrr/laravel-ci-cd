@@ -16,6 +16,5 @@ class TaskCompleted
         public Task $task,
         public User $user,
         public string $previousStatus
-    ) {
-    }
+    ) {}
 }

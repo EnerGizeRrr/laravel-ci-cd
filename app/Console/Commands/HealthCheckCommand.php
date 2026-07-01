@@ -28,7 +28,7 @@ class HealthCheckCommand extends Command
         try {
             // Check database connection
             \DB::connection()->getPdo();
-            
+
             return Command::SUCCESS;
         } catch (\Exception $e) {
             return Command::FAILURE;
