@@ -21,7 +21,6 @@ use Illuminate\Session\SessionServiceProvider;
 use Illuminate\Translation\TranslationServiceProvider;
 use Illuminate\Validation\ValidationServiceProvider;
 use Illuminate\View\ViewServiceProvider;
-
 use Laravel\Sail\SailServiceProvider;
 use Laravel\Sanctum\SanctumServiceProvider;
 use Laravel\Tinker\TinkerServiceProvider;
@@ -172,7 +171,6 @@ return [
          */
         SanctumServiceProvider::class,
         TinkerServiceProvider::class,
-
         SailServiceProvider::class,
 
         /*
